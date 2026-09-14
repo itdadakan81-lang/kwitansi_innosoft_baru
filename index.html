@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kwitansi Digital - INNOSOFT Digital Ponorogo</title>
+    <!-- Library untuk Ekspor Gambar & PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f1f5f9;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Container Panel GUI Input */
+        .form-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 24px;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+        }
+
+        .form-container h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #1e293b;
+            font-size: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .form-group input, .form-group textarea {
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Tombol Aksi */
+        .btn-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13.5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-primary { background-color: #2563eb; color: #ffffff; }
+        .btn-primary:hover { background-color: #1d4ed8; }
+
+        .btn-secondary { background-color: #64748b; color: #ffffff; }
+        .btn-secondary:hover { background-color: #475569; }
+
+        .btn-success { background-color: #059669; color: #ffffff; }
+        .btn-success:hover { background-color: #047857; }
+
+        .btn-danger { background-color: #dc2626; color: #ffffff; }
+        .btn-danger:hover { background-color: #b91c1c; }
+
+        .action-bar {
+            display: none;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* Container Preview Kwitansi */
+        .preview-wrapper {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .kwitansi-container {
+            position: relative;
+            width: 800px;
+            height: 270px;
+            background-image: url('kwitansi.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            background-color: #ffffff;
+        }
+
+        /* Positioning Teks Kwitansi */
+        .brand-right {
+            position: absolute;
+            top: 18px;
+            right: 35px;
+            text-align: right;
+            font-family: Arial, sans-serif;
+        }
+
+        .brand-right-dots {
+            display: flex;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-bottom: 2px;
+        }
+
+        .brand-right-dots .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .dot-yellow { background-color: #ffcc00; }
+        .dot-gray   { background-color: #a0a0a0; }
+        .dot-red    { background-color: #ff5555; }
+
+        .brand-right .title {
+            font-family: 'Arial Black', sans-serif;
+            font-size: 11px;
+            color: #55aaff;
+            letter-spacing: 1px;
+            line-height: 1;
+        }
+
+        .brand-right .subtitle {
+            font-size: 7px;
+            font-weight: bold;
+            color: #333;
+            letter-spacing: 0.5px;
+        }
+
+        .field {
+            position: absolute;
+            color: #000;
+            line-height: 1;
+        }
+
+        .no-kwitansi {
+            top: 28px;
+            left: 208px;
+            font-weight: bold;
+            color: #d9534f;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .penerima {
+            top: 50px;
+            left: 328px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .terbilang {
+            top: 82px;
+            left: 328px;
+            font-style: italic;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 13px;
+        }
+
+        .keperluan {
+            top: 106px;
+            left: 328px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        .nominal {
+            top: 220px;
+            left: 225px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .tanggal {
+            top: 167px;
+            left: 520px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            width: 180px;
+            text-align: center;
+        }
+
+        .ttd-area {
+            position: absolute;
+            top: 190px;
+            left: 675px;
+            width: 80px;
+        }
+
+        .stempel-img {
+            position: absolute;
+            width: 65px;
+            top: -5px;
+            left: 20px;
+            opacity: 0.75;
+            mix-blend-mode: multiply;
+        }
+
+        .ttd-img {
+            position: absolute;
+            width: 45px;
+            top: 0px;
+            left: 0px;
+            z-index: 2;
+        }
+
+        .nama-penandatangan {
+            position: absolute;
+            top: 238px;
+            left: 620px;
+            width: 180px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Panel Input Form -->
+    <div class="form-container" id="formPanel">
+        <h2>Input Data Kwitansi</h2>
+        <form id="kwitansiForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>No Kwitansi (Otomatis / Bisa Diedit):</label>
+                    <input type="text" id="inputNoKwitansi" style="font-weight: bold;" placeholder="Contoh: IN-000146">
+                </div>
+                <div class="form-group">
+                    <label>Tanggal Transaksi:</label>
+                    <input type="text" id="inputTanggal" placeholder="Ponorogo, DD MMMM YYYY">
+                </div>
+                <div class="form-group full-width">
+                    <label>Terima Dari:</label>
+                    <input type="text" id="inputPenerima" placeholder="Nama Perusahaan / Perorangan" required>
+                </div>
+                <div class="form-group full-width">
+                    <label>Jumlah Uang (Rp):</label>
+                    <input type="number" id="inputNominal" placeholder="Contoh: 4598000" required>
+                </div>
+                <div class="form-group full-width">
+                    <label>Terbilang (Otomatis):</label>
+                    <input type="text" id="inputTerbilang" placeholder="Akan terisi otomatis..." readonly style="background-color: #f8fafc; font-style: italic;">
+                </div>
+                <div class="form-group full-width">
+                    <label>Untuk Pembayaran:</label>
+                    <textarea id="inputKeperluan" rows="2" placeholder="Detail transaksi / rincian pembayaran" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Nama Penandatangan:</label>
+                    <input type="text" id="inputPenandatangan" value="Sulistiani">
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary" onclick="generateKwitansi()">Generate Kwitansi</button>
+                <button type="button" class="btn btn-danger" onclick="resetNomorAuto()">Reset Counter No. Kwitansi</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Navigasi Aksi Ekspor -->
+    <div class="action-bar" id="actionBar">
+        <button class="btn btn-secondary" onclick="editKembali()">← Edit Kembali</button>
+        <button class="btn btn-success" id="btnPng" onclick="downloadPNG()">Download .PNG</button>
+        <button class="btn btn-primary" id="btnPdf" onclick="downloadPDF()">Download .PDF</button>
+    </div>
+
+    <!-- Tampilan Kwitansi -->
+    <div class="preview-wrapper" id="previewWrapper">
+        <div class="kwitansi-container" id="kwitansiTarget">
+            <div class="brand-right">
+                <div class="brand-right-dots">
+                    <div class="dot dot-red"></div>
+                    <div class="dot dot-gray"></div>
+                    <div class="dot dot-yellow"></div>
+                </div>
+                <div class="title">INNOSOFT</div>
+                <div class="subtitle">DIGITAL PONOROGO</div>
+            </div>
+
+            <div class="field no-kwitansi" id="viewNoKwitansi">IN-000146</div>
+            <div class="field penerima" id="viewPenerima">-</div>
+            <div class="field terbilang" id="viewTerbilang">-</div>
+            <div class="field keperluan" id="viewKeperluan">-</div>
+            <div class="field nominal" id="viewNominal">-</div>
+            <div class="field tanggal" id="viewTanggal">-</div>
+
+            <div class="ttd-area">
+                <img class="stempel-img" src="stempel.png" alt="Stempel" onerror="this.style.display='none'">
+                <img class="ttd-img" src="ttd.png" alt="TTD" onerror="this.style.display='none'">
+            </div>
+            <div class="nama-penandatangan" id="viewPenandatangan">-</div>
+        </div>
+    </div>
+
+    <script>
+        // Logika Auto Increment Penomoran Kwitansi
+        function getNextKwitansiNo() {
+            let currentNo = localStorage.getItem('kwitansi_counter');
+            if (!currentNo) {
+                currentNo = 146;
+            } else {
+                currentNo = parseInt(currentNo, 10);
+            }
+            return 'IN-' + String(currentNo).padStart(6, '0');
+        }
+
+        function incrementKwitansiNo() {
+            let val = document.getElementById('inputNoKwitansi').value.trim();
+            // Mengambil angka dari input teks (misal dari "IN-000200" diambil 200)
+            let matches = val.match(/\d+/);
+            if (matches) {
+                let currentNo = parseInt(matches[0], 10);
+                localStorage.setItem('kwitansi_counter', currentNo + 1);
+            } else {
+                let currentNo = localStorage.getItem('kwitansi_counter');
+                currentNo = currentNo ? parseInt(currentNo, 10) + 1 : 147;
+                localStorage.setItem('kwitansi_counter', currentNo);
+            }
+        }
+
+        function updateCounterFromInput() {
+            let val = document.getElementById('inputNoKwitansi').value.trim();
+            let matches = val.match(/\d+/);
+            if (matches) {
+                let num = parseInt(matches[0], 10);
+                localStorage.setItem('kwitansi_counter', num);
+            }
+        }
+
+        function resetNomorAuto() {
+            if (confirm('Atur ulang counter nomor kwitansi kembali ke awal (IN-000146)?')) {
+                localStorage.setItem('kwitansi_counter', 146);
+                document.getElementById('inputNoKwitansi').value = getNextKwitansiNo();
+            }
+        }
+
+        // Fungsi Ambil Tanggal Hari Ini Sesuai Format Lokal Indonesia
+        function getTanggalHariIni() {
+            const hariIni = new Date();
+            const tanggalFormatted = hariIni.toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+            return 'Ponorogo, ' + tanggalFormatted;
+        }
+
+        // Fungsi Konversi Angka ke Kalimat Terbilang + Kata "rupiah"
+        function konversiTerbilang(nilai) {
+            const angka = ["", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "sebelas"];
+            nilai = Math.floor(Math.abs(nilai));
+            
+            if (nilai === 0) return "";
+            if (nilai < 12) return " " + angka[nilai];
+            if (nilai < 20) return konversiTerbilang(nilai - 10) + " belas";
+            if (nilai < 100) return konversiTerbilang(Math.floor(nilai / 10)) + " puluh" + konversiTerbilang(nilai % 10);
+            if (nilai < 200) return " seratus" + konversiTerbilang(nilai - 100);
+            if (nilai < 1000) return konversiTerbilang(Math.floor(nilai / 100)) + " ratus" + konversiTerbilang(nilai % 100);
+            if (nilai < 2000) return " seribu" + konversiTerbilang(nilai - 1000);
+            if (nilai < 1000000) return konversiTerbilang(Math.floor(nilai / 1000)) + " ribu" + konversiTerbilang(nilai % 1000);
+            if (nilai < 1000000000) return konversiTerbilang(Math.floor(nilai / 1000000)) + " juta" + konversiTerbilang(nilai % 1000000);
+            return "";
+        }
+
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat('id-ID').format(angka) + ',-';
+        }
+
+        // Event Listener Input No Kwitansi (Sync saat diketik)
+        document.getElementById('inputNoKwitansi').addEventListener('change', updateCounterFromInput);
+
+        // Event Listener Nominal
+        document.getElementById('inputNominal').addEventListener('input', function () {
+            const val = parseFloat(this.value);
+            if (!isNaN(val) && val > 0) {
+                let kalimat = konversiTerbilang(val).trim();
+                kalimat = kalimat.charAt(0).toUpperCase() + kalimat.slice(1) + " rupiah";
+                document.getElementById('inputTerbilang').value = kalimat;
+            } else {
+                document.getElementById('inputTerbilang').value = '';
+            }
+        });
+
+        // Initialize Form saat Halaman Dimuat
+        window.onload = function() {
+            document.getElementById('inputNoKwitansi').value = getNextKwitansiNo();
+            document.getElementById('inputTanggal').value = getTanggalHariIni();
+        };
+
+        // Render Kwitansi
+        function generateKwitansi() {
+            const penerima = document.getElementById('inputPenerima').value.trim();
+            const nominal = document.getElementById('inputNominal').value;
+            const keperluan = document.getElementById('inputKeperluan').value.trim();
+
+            if (!penerima || !nominal || !keperluan) {
+                alert('Silakan lengkapi semua kolom isian terlebih dahulu.');
+                return;
+            }
+
+            // Sync counter jika user mengedit nomor kwitansi secara manual sebelum generate
+            updateCounterFromInput();
+
+            // Mapping Ke Tampilan
+            document.getElementById('viewNoKwitansi').innerText = document.getElementById('inputNoKwitansi').value;
+            document.getElementById('viewPenerima').innerText = penerima;
+            document.getElementById('viewTerbilang').innerText = document.getElementById('inputTerbilang').value;
+            document.getElementById('viewKeperluan').innerText = keperluan;
+            document.getElementById('viewNominal').innerText = formatRupiah(nominal);
+            document.getElementById('viewTanggal').innerText = document.getElementById('inputTanggal').value;
+            document.getElementById('viewPenandatangan').innerText = document.getElementById('inputPenandatangan').value;
+
+            // Toggle Tampilan
+            document.getElementById('formPanel').style.display = 'none';
+            document.getElementById('actionBar').style.display = 'flex';
+            document.getElementById('previewWrapper').style.display = 'flex';
+        }
+
+        function editKembali() {
+            document.getElementById('formPanel').style.display = 'block';
+            document.getElementById('actionBar').style.display = 'none';
+            document.getElementById('previewWrapper').style.display = 'none';
+        }
+
+        // Helper Ekspor Canvas
+        function captureCanvas(callback) {
+            const element = document.getElementById('kwitansiTarget');
+            
+            if (typeof html2canvas === 'undefined') {
+                alert('Pustaka html2canvas belum terunduh dengan sempurna. Pastikan terkoneksi dengan internet.');
+                return;
+            }
+
+            html2canvas(element, { 
+                scale: 3, 
+                useCORS: true, 
+                allowTaint: true, 
+                logging: false 
+            }).then(canvas => {
+                callback(canvas);
+            }).catch(err => {
+                alert('Terjadi kesalahan saat memproses gambar kwitansi: ' + err.message);
+            });
+        }
+
+        // Ekspor PNG
+        function downloadPNG() {
+            const filename = document.getElementById('viewNoKwitansi').innerText + '.png';
+
+            captureCanvas(canvas => {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Increment otomatis nomor setelah download
+                incrementKwitansiNo();
+                document.getElementById('inputNoKwitansi').value = getNextKwitansiNo();
+            });
+        }
+
+        // Ekspor PDF
+        function downloadPDF() {
+            const filename = document.getElementById('viewNoKwitansi').innerText + '.pdf';
+
+            captureCanvas(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const jsPDFLib = window.jspdf ? window.jspdf.jsPDF : null;
+
+                if (!jsPDFLib) {
+                    alert('Pustaka jsPDF belum terunduh dengan sempurna. Pastikan terkoneksi dengan internet.');
+                    return;
+                }
+                
+                const pdf = new jsPDFLib({
+                    orientation: 'landscape',
+                    unit: 'px',
+                    format: [800, 270]
+                });
+
+                pdf.addImage(imgData, 'PNG', 0, 0, 800, 270);
+                pdf.save(filename);
+
+                // Increment otomatis nomor setelah download
+                incrementKwitansiNo();
+                document.getElementById('inputNoKwitansi').value = getNextKwitansiNo();
+            });
+        }
+    </script>
+</body>
+</html>
